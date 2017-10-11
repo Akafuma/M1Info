@@ -60,13 +60,17 @@ public class Tokenizer {
 			boolean litmot = false;
 			boolean litmotseparator = false;
 			boolean consomme = false;
+			boolean ok = true;
 			
-			while(reader.getFilePointer() < reader.length())
+			while(ok)
 			{
 				bytelu = reader.read();
 				c = (char) bytelu;
 				if(bytelu == -1)
+				{
 					c = '\0';
+					ok = false;
+				}
 				
 				if(racine)
 				{
@@ -78,8 +82,7 @@ public class Tokenizer {
 				}
 				
 				if(litmot)
-				{
-					
+				{					
 					prec = node;
 					node = node.getNoeud(c);
 					if(node == null)

@@ -155,7 +155,8 @@ public class ArbrePrefixe {
 		// TODO Auto-generated method stub
 		String filename = "D:\\eclipse-workspace\\FIL\\" + args[0];
 		ArbrePrefixe T = new ArbrePrefixe("lexique.txt");
-		System.out.println(T.test("lexique.txt"));	
+		//System.out.println(T.test("lexique.txt"));
+		System.out.println(T.exists("_"));
 	}
 
 }

@@ -155,7 +155,7 @@ public class ArbrePrefixe {
 
 		//String filename = args[0];
 		ArbrePrefixe T = new ArbrePrefixe("lexique.txt");
-		System.out.println(T.test("lexique.txt")); 
+		System.out.println(T.getCode("fléchages")); 
 	}
 
 }

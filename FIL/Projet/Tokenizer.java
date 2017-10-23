@@ -1,5 +1,7 @@
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -22,9 +24,9 @@ public class Tokenizer {
 		return (c == ' ');
 	}
 	
-	private boolean is_whitespaces(char c) //espace + tabulation
+	private boolean is_whitespaces(char c) //espace + tabulation + fin de chaine 
 	{
-		return (c == ' ' || c == '\t');
+		return (c == ' ' || c == '\t' || c == '\0');
 	}
 	
 	private boolean is_separator(char c)
@@ -33,6 +35,7 @@ public class Tokenizer {
 		{
 			case ' ': return true;
 			case '.': return true;
+			case '-': return true;
 			case '?': return true;
 			case '!': return true;
 			case ',': return true;
@@ -51,7 +54,9 @@ public class Tokenizer {
 		}
 	}
 	
-	public String tokenizeString(String string)//String avec \0 en fin de chaine
+	//Faire une public qui met le \0 en fin de chaine puis utilise la méthode private
+	
+	private String tokenizeString(String string)//String avec \0 en fin de chaine
 	{
 		String tokens = "";
 		Noeud node = lexique.getRoot();
@@ -126,7 +131,7 @@ public class Tokenizer {
 							mangeEspaces = true;
 							lectureMot = false;
 							
-							if(!fin)
+							if(!fin && node.getCode() > 0)//On relit le séparateur si on le connait
 								pos--; // on relit le séparateur
 						}								
 					}
@@ -157,23 +162,20 @@ public class Tokenizer {
 				{
 					if(is_separator(c))
 					{
-						if(is_space(c))
+						if(is_space(c)) // Peut etre pas un echec
 						{
 							node = prec.getNoeud('_');
-							if(node == null)
+							if(node == null)//Fin de mot
 							{
 								code = prec.getCode();
-								if(code < 0)//On ne reconnait pas le mot
+								if(code < 0)
 								{
-									tokens = tokens + "0 ";
-									pos = posretour;//on reviens en arriere
+									tokens = tokens + codemot + " ";
+									pos = posretour;
 								}
 								else
-								{
 									tokens = tokens + code + " ";
-									if(!fin)
-										pos--;
-								}
+								
 								//RAZ
 								node = lexique.getRoot();
 								lectureMotLong = false;
@@ -189,20 +191,26 @@ public class Tokenizer {
 								}
 							}
 						}
-						else // Le séparateur n'est pas un espace et découpe un mot
+						else if(fin)
 						{
 							code = prec.getCode();
-							if(code < 0)//On ne reconnait pas le mot
+							if(code < 0)
 							{
-								tokens = tokens + "0 ";
-								pos = posretour;//on reviens en arriere
+								tokens = tokens + codemot + " ";
+								pos = posretour;
+								
+								node = lexique.getRoot();
+								lectureMotLong = false;
+								mangeEspaces = true;
 							}
 							else
-							{
 								tokens = tokens + code + " ";
-								if(!fin) // need fix
-									pos--;
-							}
+						}
+						else // Le séparateur n'est pas un espace, echec de lecture d'un mot, on revient au dernier mot
+						{
+							tokens = tokens + codemot + " ";
+							pos = posretour;						
+							
 							//RAZ
 							node = lexique.getRoot();
 							lectureMotLong = false;
@@ -227,6 +235,12 @@ public class Tokenizer {
 						{
 							codemot = code;
 							posretour = pos - 1;
+						}
+						code = node.getCode();
+						if(code > 0)
+						{
+							codemot = code;
+							posretour = pos;
 						}
 					}
 				}
@@ -256,9 +270,33 @@ public class Tokenizer {
 			while(sc.hasNextLine())
 			{
 				s = sc.nextLine() + '\0';
-				System.out.println(s);
 				System.out.println(tokenizeString(s));
 			}
+			sc.close();
+		}
+		catch(FileNotFoundException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+		} 
+	}
+	
+	public void tokenize(String input, String output)
+	{
+		try
+		{
+			Scanner sc = new Scanner(new File(input));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(output));
+			String s;
+			String tokens;
+			while(sc.hasNextLine())
+			{
+				s = sc.nextLine() + '\0';
+				tokens = tokenizeString(s);	
+				bw.write(tokens);
+				bw.newLine();
+			}
+			bw.close();
 			sc.close();
 		}
 		catch(FileNotFoundException e)
@@ -276,7 +314,7 @@ public class Tokenizer {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Tokenizer t = new Tokenizer("lexique.txt");
-		t.tokenize("train.txt");
+		t.tokenize("train.txt", "train.code.txt");
 		//System.out.println(t.tokenizeString("j'achète à bas prix tout compte fait, c'est bien moins cher!!\0"));
 	}
 

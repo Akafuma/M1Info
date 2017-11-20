@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.Vector;
 
@@ -20,6 +21,7 @@ public class Treillis {
 		try
 		{
 			Scanner sc = new Scanner(new File(str));
+			sc.useLocale(Locale.US);
 			int codemot;
 			float prob;
 			int index = -1;
@@ -36,12 +38,9 @@ public class Treillis {
 				else
 				{
 					codemot = Integer.parseInt(txt);
-					//codemot = sc.nextInt();
-					System.out.println(sc.next());
 					prob = sc.nextFloat();
 					TreillisNode n = new TreillisNode(codemot, prob);
-					treillis.elementAt(index).add(n);
-					
+					treillis.elementAt(index).add(n);					
 				}
 			}
 			
@@ -57,7 +56,7 @@ public class Treillis {
 	{
 		for(int i = 0; i < treillis.size(); i++)
 		{
-			System.out.println( Max(treillis.elementAt(i)) );
+			System.out.println( Min(treillis.elementAt(i)) );
 		}
 	}
 	
@@ -73,6 +72,24 @@ public class Treillis {
 			if(tmp > max)
 			{
 				max = tmp;
+				rcode = n.getCodemot();
+			}
+		}
+		return rcode;
+	}
+	
+	private static int Min(Vector<TreillisNode> v)
+	{
+		int rcode = 0;;
+		float min = Float.MAX_VALUE;
+		float tmp;
+		for(int i = 0; i < v.size(); i++)
+		{
+			TreillisNode n = v.elementAt(i);
+			tmp = n.getProbEmission();
+			if(tmp < min)
+			{
+				min = tmp;
 				rcode = n.getCodemot();
 			}
 		}

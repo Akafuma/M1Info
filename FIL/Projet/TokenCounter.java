@@ -11,12 +11,16 @@ public class TokenCounter {
 	
 	private String input;
 	private String output;
+	private int unigramme[];
+	private Bigramme bigramme;
 	private double lissageAlpha;
-	private int V1;
-	private int V2;
-	private int N;
+	private int V1; //nombre d'unigrammes différents
+	private int V2; //nombre de bigrammes différents
+	private int N; //nombre de mots du corpus
 	
 	public TokenCounter() {
+		unigramme = new int[90000];
+		bigramme = new Bigramme();
 		lissageAlpha = 0.1;
 		N = 0;
 	}
@@ -31,8 +35,8 @@ public class TokenCounter {
 			input = filename;
 			output = nameoutput;
 			
-			int unigramme[] = new int[90000]; // / ! \ TokenMax
-			Bigramme bigramme = new Bigramme();
+			//int unigramme[] = new int[90000]; // / ! \ TokenMax
+			//Bigramme bigramme = new Bigramme();
 			int num;
 			int last;
 			
@@ -155,27 +159,55 @@ public class TokenCounter {
 			BufferedWriter bw = new BufferedWriter(new FileWriter("lm.txt"));
 			
 			String str;
+			int token;
+			int token2;
+			int count;
+			double PL;
+			double log;
+			boolean uni = true;
 			
 			str = sc.nextLine(); // "1-gram:"
 			bw.write("1-gram:"); bw.newLine();
 			
-			while(sc.hasNextLine())
+			while(sc.hasNextLine()) // Unigramme
 			{
 				str = sc.nextLine();
 				if(str.compareTo("2-gram:") == 0)
-					break;
+				{
+					bw.write("2-gram:");
+					bw.newLine();
+					uni = false;
+				}
 				else
 				{
 					Scanner sc_str = new Scanner(str);
-					int token = sc_str.nextInt();
-					int count = sc_str.nextInt();
-					double PL = (count + lissageAlpha) / (N + V1 * lissageAlpha);
+					if(uni) // Calcul unigramme
+					{
+						token = sc_str.nextInt();
+						count = sc_str.nextInt();
+						PL = (count + lissageAlpha) / (N + V1 * lissageAlpha);
+						//transformer PL en -log
+						log = (-1) * Math.log10(PL);
+						
+						bw.write(token + " " + log);
+						bw.newLine();
+					}
+					else //calcul bigramme
+					{
+						token = sc_str.nextInt();
+						token2 = sc_str.nextInt();
+						count = sc_str.nextInt();
+						PL = (count + lissageAlpha) / (unigramme[token] + V2 * lissageAlpha);
+						// log(a / b) = log a - log b
+						log = (-1) * Math.log10(PL);
+						
+						bw.write(token + " " + token2 + " " + log);
+						bw.newLine();
+					}
 					
-					bw.write(token + " " + PL);
-					bw.newLine();
 					sc_str.close();
 				}
-			}					
+			}
 				
 			sc.close();
 			bw.close();

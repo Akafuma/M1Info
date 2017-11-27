@@ -55,6 +55,10 @@ public class Tokenizer {
 	}
 	
 	//Faire une public qui met le \0 en fin de chaine puis utilise la méthode private
+	public String tokenizeStr(String string)
+	{
+		return tokenizeString(string + '\0');
+	}
 	
 	private String tokenizeString(String string)//String avec \0 en fin de chaine
 	{

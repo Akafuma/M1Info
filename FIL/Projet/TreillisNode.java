@@ -2,12 +2,12 @@
 public class TreillisNode {
 	
 	private int codemot;
-	private float prob_emission;
-	private float alpha;
+	private double prob_emission;
+	private double alpha;
 	private TreillisNode beta;
 	
 	//Methods
-	public TreillisNode(int code, float prob)
+	public TreillisNode(int code, double prob)
 	{
 		codemot = code;
 		prob_emission = prob;
@@ -18,17 +18,17 @@ public class TreillisNode {
 		return codemot;
 	}
 	
-	public float getProbEmission()
+	public double getProbEmission()
 	{
 		return prob_emission;
 	}
 	
-	public float getAlpha()
+	public double getAlpha()
 	{
 		return alpha;
 	}
 	
-	public void setAlpha(float a)
+	public void setAlpha(double a)
 	{
 		alpha = a;
 	}

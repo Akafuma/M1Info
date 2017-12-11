@@ -2,51 +2,101 @@ import java.util.Vector;
 
 public class Bigramme{
 	
-	private Vector< Vector<ElementBigramme>> list;
+	private Vector<Vector<BigrammeElement> > data;
 	
 	public Bigramme()
 	{
-		list = new Vector<>();
-		for(int i = 0; i < 90000; i++)
-			list.add(i, new Vector<ElementBigramme>());		
+		data = new Vector<Vector<BigrammeElement> >(10000);
+		data.setSize(10000);
 	}
 	
-	public Vector<Vector<ElementBigramme>> getList() {
-		return list;
-	}
 
 	public void incr(int token1, int token2)
 	{
-		ElementBigramme e = get(token1, token2);
+		BigrammeElement e = get(token1, token2);
 		if(e == null)
-			list.elementAt(token1).add(new ElementBigramme(token2));
+		{
+			if(token1 >= data.size())
+				data.setSize(token1 + 5000);
+			
+			Vector<BigrammeElement> v = data.get(token1);
+			if(v == null)
+			{
+				v = new Vector<BigrammeElement>();
+				data.setElementAt(v, token1);
+			}
+			v.add(new BigrammeElement(token1, token2));
+		}
 		else
 			e.incr();
 	}
 	
+	public void add(int token1, int token2, int c)
+	{
+		if(token1 >= data.size())
+			data.setSize(token1 + 5000);
+		
+		Vector<BigrammeElement> v = data.get(token1);
+		if(v == null)
+		{
+			v = new Vector<BigrammeElement>();
+			data.setElementAt(v, token1);
+		}
+		v.add(new BigrammeElement(token1, token2, c));
+	}
+	
 	public int getCount(int token1, int token2)
 	{
-		ElementBigramme e = get(token1, token2);
+		BigrammeElement e = get(token1, token2);
 		if(e == null)
 			return 0;
-		else
+		else 
 			return e.getCount();
 	}
 	
-	private ElementBigramme get(int token1, int token2)
+	public double getProb(int token1, int token2)
 	{
-		Vector<ElementBigramme> suiv = list.get(token1);
-		
-		if(suiv.size() == 0)
+		BigrammeElement e = get(token1, token2);
+		if(e == null)
+			return 0;
+		else 
+			return e.getLogprob();
+	}
+	
+	public void setProb(int token1, int token2, double p)
+	{
+		BigrammeElement e = get(token1, token2);
+		if(e == null)
+			return;
+		else 
+			e.setLogprob(p);
+	}
+	
+	public int size()
+	{
+		return data.size();
+	}
+	
+	private BigrammeElement get(int token1, int token2)
+	{
+		Vector<BigrammeElement> v = data.get(token1);
+		if(v == null)
 			return null;
-		
-		for(int i = 0; i < suiv.size(); i++)
+		else
 		{
-			ElementBigramme ele = suiv.get(i);
-			if(ele.getNumToken() == token2)
-				return ele;				
+			BigrammeElement e;
+			for(int i = 0; i < v.size(); i++)
+			{
+				e = v.get(i);
+				if(e.getNumToken2() == token2)
+					return e;
+			}
+			return null;
 		}
-		
-		return null;
+	}
+	
+	public Vector<BigrammeElement> getBigrammes(int token1)
+	{
+		return data.get(token1);
 	}
 }

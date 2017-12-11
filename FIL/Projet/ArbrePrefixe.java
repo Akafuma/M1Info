@@ -36,7 +36,8 @@ public class ArbrePrefixe {
 			while(scanner.hasNextLine())
 			{
 				code = scanner.nextInt();
-				mot = scanner.next();
+				mot = scanner.nextLine();
+				mot = mot.replaceAll("\\s", "");//mange espace
 				
 				add(code, mot);
 			}
@@ -154,8 +155,8 @@ public class ArbrePrefixe {
 	public static void main(String[] args) {
 
 		//String filename = args[0];
-		ArbrePrefixe T = new ArbrePrefixe("lexique.txt");
-		System.out.println(T.getCode("fléchages")); 
+		ArbrePrefixe T = new ArbrePrefixe("lexique_jouet.txt");
+		System.out.println(T.getCode("are")); 
 	}
 
 }

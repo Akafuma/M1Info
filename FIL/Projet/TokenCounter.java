@@ -11,22 +11,24 @@ public class TokenCounter {
 	
 	private String input;
 	private String output;
-	private int unigramme[];
-	private Bigramme bigramme;
-	private double lissageAlpha;
-	private int V1; //nombre d'unigrammes différents
-	private int V2; //nombre de bigrammes différents
-	private int N; //nombre de mots du corpus
+	private Unigramme unigramme; //les comptes -- rework utiliser associative list
+	private Bigramme bigramme; //les comptes	
 	
 	public TokenCounter() {
-		unigramme = new int[90000];
+		unigramme = new Unigramme();
 		bigramme = new Bigramme();
-		lissageAlpha = 0.1;
-		N = 0;
-	}
+	}	
 	
+	public String getInput() {
+		return input;
+	}
+
+	public String getOutput() {
+		return output;
+	}
+
 	//Produit les comptes des 1-gram et 2-gram
-	public void count(String filename, String nameoutput)
+	public void count(String filename, String nameoutput) // Attention au mots non reconnus par l'analyse lexicale
 	{
 		try
 		{
@@ -35,19 +37,17 @@ public class TokenCounter {
 			input = filename;
 			output = nameoutput;
 			
-			//int unigramme[] = new int[90000]; // / ! \ TokenMax
-			//Bigramme bigramme = new Bigramme();
 			int num;
 			int last;
-			
+			//Comptage bigramme et unigramme
 			while(sc.hasNextLine())
 			{
 				String str = sc.nextLine();
 				Scanner sc_str = new Scanner(str);
 				
 				num = sc_str.nextInt();
-				unigramme[num]++;
-				N++;
+				unigramme.incr(num);
+				//unigramme[num]++;
 				
 				//ajout bigramme 0 num	
 				bigramme.incr(0, num);			
@@ -56,8 +56,8 @@ public class TokenCounter {
 				while(sc_str.hasNextInt())
 				{
 					num = sc_str.nextInt();
-					N++;
-					unigramme[num]++;
+					//unigramme[num]++;
+					unigramme.incr(num);
 					bigramme.incr(last, num);
 					last = num;
 				}				
@@ -66,33 +66,37 @@ public class TokenCounter {
 			
 			sc.close();
 			
-			
+			//Ecriture du fichier
 			BufferedWriter bw = new BufferedWriter(new FileWriter(nameoutput));
 			bw.write("1-gram:");
 			bw.newLine();
-			for(int i = 0; i < 90000; i++)
+			for(int i = 0; i < unigramme.size(); i++)
 			{
-				if(unigramme[i] > 0)
+				if(unigramme.getCount(i) > 0)
 				{
-					bw.write(i + " " + unigramme[i]);
+					String str = unigramme.indexToString(i);
+					bw.write(str);
 					bw.newLine();
 				}
 			}
 			
 			bw.write("2-gram:");
 			bw.newLine();
-			for(int i = 0; i < 90000; i++)
+			for(int i = 0; i < bigramme.size(); i++)
 			{
-				Vector<ElementBigramme> temp = bigramme.getList().get(i);
-				
-				for(int j = 0; j < temp.size(); j++)
+				Vector<BigrammeElement> v = bigramme.getBigrammes(i);
+				if(v != null)
 				{
-					ElementBigramme e = temp.get(j);
-					String str = i + " " + e.getNumToken() + " " + e.getCount();
-					bw.write(str);
-					bw.newLine();
+					for(int j = 0; j < v.size(); j++)
+					{
+						BigrammeElement e = v.get(j);
+						String str = e.getNumToken1() + " " + e.getNumToken2() + " " + e.getCount();
+						bw.write(str);
+						bw.newLine();
+					}
 				}
-			}			
+			}
+			
 			bw.close();
 		}		
 		catch(FileNotFoundException e)
@@ -103,129 +107,26 @@ public class TokenCounter {
 		{
 			System.out.println(e);
 		}
-	}
-	
-	//Refaire gestion fichiers communicants
-	private void init()
-	{
-		try
-		{
-			Scanner sc = new Scanner(new File(output));
-			
-			int count = 0;
-			String str;
-			boolean ok = true;
-			str = sc.nextLine();
-			if(str.compareTo("1-gram:") == 0)
-			{
-				while(sc.hasNextLine() && ok)
-				{
-					str = sc.nextLine();
-					count++;
-					if(str.compareTo("2-gram:") == 0)
-					{
-						count--;
-						V1 = count + 1;
-						count = 0;
-						ok = false;
-					}
-				}
-				while(sc.hasNextLine())
-				{
-					sc.nextLine();
-					count++;
-				}
-				V2 = count + 1;
-			}
-			else
-			{
-				System.out.println("Erreur : mauvais fichier");
-			}
-			
-			sc.close();
-		}
-		catch(FileNotFoundException e)
-		{
-			System.out.println(e);
-		}
-	}
-	
-	public void LM()
-	{
-		init();
-		try
-		{
-			Scanner sc = new Scanner(new File(output));
-			BufferedWriter bw = new BufferedWriter(new FileWriter("lm.txt"));
-			
-			String str;
-			int token;
-			int token2;
-			int count;
-			double PL;
-			double log;
-			boolean uni = true;
-			
-			str = sc.nextLine(); // "1-gram:"
-			bw.write("1-gram:"); bw.newLine();
-			
-			while(sc.hasNextLine()) // Unigramme
-			{
-				str = sc.nextLine();
-				if(str.compareTo("2-gram:") == 0)
-				{
-					bw.write("2-gram:");
-					bw.newLine();
-					uni = false;
-				}
-				else
-				{
-					Scanner sc_str = new Scanner(str);
-					if(uni) // Calcul unigramme
-					{
-						token = sc_str.nextInt();
-						count = sc_str.nextInt();
-						PL = (count + lissageAlpha) / (N + V1 * lissageAlpha);
-						//transformer PL en -log
-						log = (-1) * Math.log10(PL);
-						
-						bw.write(token + " " + log);
-						bw.newLine();
-					}
-					else //calcul bigramme
-					{
-						token = sc_str.nextInt();
-						token2 = sc_str.nextInt();
-						count = sc_str.nextInt();
-						PL = (count + lissageAlpha) / (unigramme[token] + V2 * lissageAlpha);
-						// log(a / b) = log a - log b
-						log = (-1) * Math.log10(PL);
-						
-						bw.write(token + " " + token2 + " " + log);
-						bw.newLine();
-					}
-					
-					sc_str.close();
-				}
-			}
-				
-			sc.close();
-			bw.close();
-		}
-		catch(FileNotFoundException e)
-		{
-			System.out.println(e);
-		}
-		catch(IOException e)
-		{
-			System.out.println(e);
-		}
-	}
+	}	
 	
 	public static void main(String[] args) {
+		/*
+		Tokenizer t = new Tokenizer("lexique_ratp_fr.txt");
+		t.tokenize("corpus_ratp_fr.txt", "corpus_ratp_fr_code.txt");
 		TokenCounter tc = new TokenCounter();
-		tc.count("unigramme.txt", "unigramme-out.txt");
-		tc.LM();
+		tc.count("corpus_ratp_fr_code.txt", "corpus_ratp_fr_lm.txt");
+		System.out.println("Compte terminé");
+		*/
+		LM lm = new LM("corpus_ratp_fr_lm.txt");
+		System.out.println("Chargement et calcul de LM terminé");
+		Treillis treillis = new Treillis();
+		treillis.loadFromFile();
+		System.out.println("Treillis chargé");
+		String s = treillis.viterbi(lm);
+		System.out.println(s);
+		System.out.println(lm.evalPPL(s));
+		System.out.println(lm.evalPPL("3011 8963 20 5928"));
+		//System.out.println(lm.evalPPL(t.tokenizeStr("maison est cool")));
 	}
 	
 }
